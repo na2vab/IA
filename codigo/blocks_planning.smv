@@ -1,0 +1,95 @@
+MODULE main
+
+VAR
+  on_a : {b, c, 1, 2, 3, 4};
+  on_b : {a, c, 1, 2, 3, 4};
+  on_c : {a, b, 1, 2, 3, 4};
+
+  move : { none,
+    move_a_b, move_a_c, move_a_1, move_a_2, move_a_3, move_a_4,
+    move_b_a, move_b_c, move_b_1, move_b_2, move_b_3, move_b_4,
+    move_c_a, move_c_b, move_c_1, move_c_2, move_c_3, move_c_4 };
+
+DEFINE
+  size_a := 2;
+  size_b := 1;
+  size_c := 3;
+
+  occupied_1 := (on_a = 1) | (on_b = 1) | (on_c = 1);
+  occupied_2 := (on_a = 1) | (on_a = 2) | (on_b = 2) | (on_c = 1) | (on_c = 2);
+  occupied_3 := (on_a = 2) | (on_a = 3) | (on_b = 3) | (on_c = 1) | (on_c = 2);
+  occupied_4 := (on_a = 3) | (on_b = 4) | (on_c = 2);
+
+  clear_a := (on_b != a) & (on_c != a);
+  clear_b := (on_a != b) & (on_c != b);
+  clear_c := (on_a != c) & (on_b != c);
+
+  clear_1 := !occupied_1;
+  clear_2 := !occupied_2;
+  clear_3 := !occupied_3;
+  clear_4 := !occupied_4;
+
+  fits_a_1 := TRUE;
+  fits_a_2 := TRUE;
+  fits_a_3 := TRUE;
+  fits_a_4 := FALSE;
+
+  fits_b_1 := TRUE;
+  fits_b_2 := TRUE;
+  fits_b_3 := TRUE;
+  fits_b_4 := TRUE;
+
+  fits_c_1 := TRUE;
+  fits_c_2 := TRUE;
+  fits_c_3 := FALSE;
+  fits_c_4 := FALSE;
+
+  goal := (on_a = 1);
+
+INIT
+  on_a = b &
+  on_b = c &
+  on_c = 4;
+
+TRANS
+  next(on_a) =
+    case
+      move = move_a_b & clear_a & clear_b & size_a <= size_b & on_a != b : b;
+      move = move_a_c & clear_a & clear_c & size_a <= size_c & on_a != c : c;
+      move = move_a_1 & clear_a & fits_a_1 & clear_1 & clear_2 : 1;
+      move = move_a_2 & clear_a & fits_a_2 & clear_2 & clear_3 : 2;
+      move = move_a_3 & clear_a & fits_a_3 & clear_3 & clear_4 : 3;
+      move = move_a_4 & clear_a & fits_a_4 & clear_4 : 4;
+      TRUE : on_a;
+    esac;
+
+TRANS
+  next(on_b) =
+    case
+      move = move_b_a & clear_b & clear_a & size_b <= size_a & on_b != a : a;
+      move = move_b_c & clear_b & clear_c & size_b <= size_c & on_b != c : c;
+      move = move_b_1 & clear_b & fits_b_1 & clear_1 : 1;
+      move = move_b_2 & clear_b & fits_b_2 & clear_2 : 2;
+      move = move_b_3 & clear_b & fits_b_3 & clear_3 : 3;
+      move = move_b_4 & clear_b & fits_b_4 & clear_4 : 4;
+      TRUE : on_b;
+    esac;
+
+TRANS
+  next(on_c) =
+    case
+      move = move_c_a & clear_c & clear_a & size_c <= size_a & on_c != a : a;
+      move = move_c_b & clear_c & clear_b & size_c <= size_b & on_c != b : b;
+      move = move_c_1 & clear_c & fits_c_1 & clear_1 & clear_2 & clear_3 : 1;
+      move = move_c_2 & clear_c & fits_c_2 & clear_2 & clear_3 & clear_4 : 2;
+      TRUE : on_c;
+    esac;
+
+CTLSPEC !EF goal;
+FAIRNESS goal;
+
+-- Propriedades de segurança
+CTLSPEC AG !(on_a = b & on_b = a);
+CTLSPEC AG !(on_a = 4);
+
+
